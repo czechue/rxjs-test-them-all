@@ -48,3 +48,11 @@ var subscription = mouseMove.forEach(console.log)
 // unsubscribe
 subscription.dispose()
 ```
+
+#### Deeply nested collections:
+- tak długo mapować aż otrzyma się oczekiwaną wartość,
+- następnie z tego miejsca ma się dostęp do wartości znajdujących się powyżej
+- w zależności od ilości zagnieżdzeń (n) użyć na końcu concatAll() n-1 razy
+- It's a very common pattern to see several nested concatMap operations, 
+with the last operation being a map. 
+You can think of this pattern as the functional version of a nested forEach.
