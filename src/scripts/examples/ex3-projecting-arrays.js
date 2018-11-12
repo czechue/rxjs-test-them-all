@@ -45,7 +45,6 @@
 //   return videoAndTitlePairs;
 // }
 
-
 export default function projectingArrays(arr) {
   const videoAndTitlePairs = [];
   arr.forEach((item) => {

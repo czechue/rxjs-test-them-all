@@ -1,20 +1,24 @@
+import '../examples/ex4_implement-map'
 // const sum = require();
-import { traversingArray, traversingWithForEach } from '../src/scripts/examples/ex1';
-import projectingArrays from '../src/scripts/examples/ex3-projecting-arrays';
-import newReleases from './mocks/data';
+import { traversingArray, traversingWithForEach } from '../examples/ex1_ex2';
+import projectingArrays from '../examples/ex3-projecting-arrays';
+import newReleases from '../mocks/data';
 
 const names = ['Ben', 'Jafar', 'Matt', 'Priya', 'Brian'];
 
+// ex1
 test('traversingArray', () => {
   const result = traversingArray(names);
   expect(result).toEqual(names);
 });
 
+//ex2
 test('traversingWithForEach', () => {
   const result = traversingWithForEach(names);
   expect(result).toEqual(names);
 });
 
+// ex3
 test('projectingArrays', () => {
   const resultArr = [
     {
@@ -36,4 +40,11 @@ test('projectingArrays', () => {
   ];
   const result = projectingArrays(newReleases);
   expect(result).toEqual(resultArr);
+});
+
+// ex4
+test('implementMap', () => {
+  const arr = [1,2,3];
+  const res = arr.myMap((i) => i + 1);
+  expect(res).toEqual([2,3,4])
 });
