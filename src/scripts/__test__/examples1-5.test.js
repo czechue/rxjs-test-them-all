@@ -1,5 +1,5 @@
 import '../examples/ex4_implement-map';
-import newReleases from '../mocks/data';
+import {newReleases} from '../mocks/data';
 import { traversingArray, traversingWithForEach } from '../examples/ex1_ex2';
 import projectingArrays from '../examples/ex3-projecting-arrays';
 
