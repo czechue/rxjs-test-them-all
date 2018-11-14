@@ -20,7 +20,7 @@
 
 Array.prototype.myMap = function(projectionFunction) {
   var results = [];
-  this.forEach(function(itemInArray) {
+  this.forEach(function (itemInArray) {
     results.push(projectionFunction(itemInArray));
   });
 
