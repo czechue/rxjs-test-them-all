@@ -11,6 +11,7 @@ Observable - to kolekcje które się wykonują w czasie
 #### Libka:
 
 Rx.js -> http://reactivex.io/
+http://reactivex.io/learnrx/
 
 #### Events to Observables
 
@@ -182,3 +183,230 @@ function(button) {
 			});
 }
 ```
+Notice that Observable's forEach() function returns a Subscription object. 
+Disposing of a Subscription object unsubscribes from the event and prevents 
+memory leaks. Disposing of a subscription is the asynchronous equivalent of 
+stopping half-way through a counting for loop.
+
+Disposing of a Subscription object is basically the same as calling 
+removeEventListener(). On the surface, these two approaches to Event handling 
+don't seem to be very different. Under the circumstances, why should we bother 
+converting Events to Observables? The reason is that if we convert Events 
+to Observable Objects, we can use powerful functions to transform them. 
+In the next exercise we'll learn how we can use one such function to avoid 
+dealing with Subscriptions in many cases...
+
+Exercise 30: Completing Sequences with take()
+
+Have you ever wished that you could listen for the next occurrence of an event 
+and then immediately unsubscribe? For example, developers will often attach an 
+event handler to window.onload, expecting that their event handler will only be 
+called once.
+
+```javascript
+window.addEventListener(
+	"load",
+	function()
+		// do some work here, but expect this function will only be called once.
+	})
+```
+In instances such as this, it's good practice to unsubscribe from the event after 
+it's fired. Failing to unsubscribe is a memory leak. Depending on the circumstances, 
+memory leaks can seriously destablize your application and can be very difficult 
+to track down. Unfortunately unsubscribing from an event after one occurrence 
+can be cumbersome:
+
+```javascript
+var handler = function() {
+	// do some work here, then unsubscribe from the event
+	window.removeEventListener("load", handler)
+};
+window.addEventListener("load", handler);
+```
+
+Wouldn't it be nice if there was an easier way to code this? 
+That's why Observable has a **take()** function. The take() function works like this...
+
+```javascript
+seq([1,,,2,,,3,,,4,,,5,,,6,,,]).take(3) === seq([1,,,2,,,3]);
+```
+An Observable based on an Event will never complete on its own. **The take() function 
+creates a new sequence that completes after a discrete number of items arrive**. 
+This is important, because unlike an Event, when an Observable sequence completes it 
+unsubscribes all of its listeners. That means that if we use take() to complete our Event sequence, we don't need to unsubscribe!
+
+Let's repeat the previous exercise, in which we listened for a single button click 
+and then unsubscribed. This time let's use the take() function to complete the 
+sequence after the button is clicked.
+
+```javascript
+function(button) {
+	var buttonClicks = Observable.fromEvent(button, "click");
+
+	// Use take() to listen for only one button click
+	// and unsubscribe.
+	buttonClicks.
+		// Insert take() call here
+		forEach(function(clickEvent) {
+			alert("Button was clicked once. Stopping Traversal.");
+		});
+}
+```
+The take() function is great way of listening for a discrete number of events and 
+then unsubscribing, but Observable has an even more flexible function that we can 
+use to complete sequences...
+
+Exercise 31: Completing sequences with **takeUntil()**
+
+**Have you ever wanted to unsubscribe from one Event when another Event fires?** 
+Observable's takeUntil() function is a convenient way of completing a sequence 
+when another Event occurs. Here's how takeUntil() works:
+
+```javascript
+var numbersUntilStopButtonPressed =
+	seq(            [ 1,,,2,,,3,,,4,,,5,,,6,,,7,,,8,,,9,,, ])
+	.takeUntil(seq( [  ,,, {eventType: "click"},,, ]) )       === seq([ 1,,,2 ])
+```
+
+Earlier we (unknowningly) built a dynamic Microsoft price stock ticker using Observable. 
+The problem with that stock ticker was that it kept going on forever. 
+If left unchecked, all the entries in the log could use up all of the memory on the page. 
+In the exercise below, filter the Observable sequence of NASDAQ prices for MSFT stock 
+prices, use the fromEvent() function to create an Observable .
+
+```javascript
+function(pricesNASDAQ, printRecord, stopButton) {
+	var stopButtonClicks = Observable.fromEvent(stopButton,"click"),
+		microsoftPrices =
+			pricesNASDAQ.
+				filter(function(priceRecord) {
+					return priceRecord.name === "MSFT";
+				}).
+				takeUntil(stopButtonClicks);
+
+	microsoftPrices.
+		forEach(function(priceRecord) {
+			printRecord(priceRecord);
+		});
+}
+```
+
+We've learned that Observable sequences are much more powerful than raw events, 
+because they can complete. **The take() and takeUntil() functions are powerful enough 
+to ensure that we never have to unsubscribe from another event again!** 
+This reduces the risk of memory leaks and makes our code more readable.
+
+Here's what we learned in this section:
+
+- We can traverse Observables using forEach().
+- We can use fromEvent() to convert Events into Observables that never complete.
+- We can apply take() and takeUntil() to an Observable to create a new sequence which does complete.
+- In the next section we'll learn how to combine events to create more complex events. 
+You'll be suprised how easily you can solve complex, asynchronous problems!
+
+### Querying Observables
+
+What's the difference between these two tasks?
+
+Creating a flat list of movies with a rating of 5.0 from a bunch of movie lists.
+Creating a sequence of all the mouse drag events from the mouseDown, mouseMove, 
+and mouseUp events.
+You might think of them as different, and might code them very differently, 
+but these tasks are fundamentally the same. Both of these tasks are queries, 
+and can be solved using the functions you've learned in these exercises.
+
+The difference between traversing an Array and traversing an Observable is the 
+direction in which the data moves. When traversing an Array, the client pulls data 
+from the data source, blocking until it gets a result. When traversing Observables, 
+the data source pushes data at the client whenever it arrives.
+
+It turns out that the direction in which data moves is orthogonal to querying that data. 
+In other words, when we're querying data it doesn't matter whether we pull data, 
+or data is pushed at us. In either case the query methods make the same transformations. 
+The only thing that changes is the input and output type respectively. 
+If we filter an Array, we get a new Array. If we filter an Observable, 
+we get a new Observable, and so on.
+
+Take a look at how the query methods transform Observables and Arrays
+
+```javascript
+// map()
+
+[1,2,3].map(function(x) { return x + 1 })                       === [2,3,4]
+seq([1,,,2,,,3]).map(function(x) { return x + 1})               === seq([2,,,3,,,4])
+seq([1,,,2,,,3,,,]).map(function(x) { return x + 1 })           === seq([2,,,3,,,4,,,])
+
+// filter()
+
+[1,2,3].filter(function(x) { return x > 1; })                   === [2,3]
+seq([1,,,2,,,3]).filter(function(x) { return x > 1; })          === seq([2,,,3])
+seq([1,,,2,,,3,,,]).filter(function(x) { return x > 1; })       === seq([2,,,3,,,])
+
+// concatAll()
+
+[ [1, 2, 3], [4, 5, 6] ].concatAll()                             === [1,2,3,4,5,6]
+seq([ seq([1,,,2,,,3]),,,seq([4,,,5,,,6]) ]).concatAll()         === seq([1,,,2,,,3,,,4,,,5,,,6])
+
+// If a new sequence arrives before all the items
+// from the previous sequence have arrived, no attempt
+// to retrieve the new sequence's elements is made until
+// the previous sequence has completed. As a result the
+// order of elements in the sequence is preserved.
+seq([
+	seq([1,,,, ,2, ,3])
+	,,,seq([,,4, ,5, ,,6]) ]).
+	concatAll()                                                  === seq([1,,,,,2,,3,,4,,5,,,6])
+
+// Notice that as long as at least one sequence being
+// concatenated is incomplete, the concatenated sequence is also
+// incomplete.
+seq([
+	seq([1,, ,,, ,,,2,,,3])
+	,,,seq([4,,,5,,, ,,, ,,6,,,]) ]).
+	concatAll()                                                  === seq([1,,,,,,,,2,,,3,4,,,5,,,,,,,,6,,,])
+
+// reduce()
+
+[ 1, 2, 3 ].reduce(sumFunction)                                 === [ 6 ]
+seq([ 1,,,2,,,3 ]).reduce(sumFunction)                          === seq([,,,,,,6])
+
+// Reduced sequences do not complete until the
+// sequence does.
+seq([ 1,,,2,,,3,,, ]).reduce(sumFunction)                       === seq([ ,,,,,,,,,])
+
+// zip()
+
+// In both Arrays and Observables, the zipped sequence
+// completes as soon as either the left or right-hand
+// side sequence completes.
+Array.zip([1,2],[3,4,5], sumFunction)                           === [4,6]
+Observable.zip(seq([1,,,2]),seq([3,,,4,,,5]), sumFunction)      === seq([4,,,6])
+
+// take()
+[1,2,3].take(2)                                                 === [1, 2]
+seq([ 1,,,2,,,3 ]).take(2)                                      === seq([ 1,,,2 ])
+seq([ 1,,,2,,,3,,, ]).take(2)                                   === seq([ 1,,,2 ])
+
+// takeUntil()
+
+// takeUntil works for Arrays, but it's not very useful
+// because the result will always be an empty array.
+[1,2,3].takeUntil([1])                                          === []
+
+seq([1,,,2,,,3,,, ]).takeUntil(
+seq([ ,,, ,,4 , ]))                                             === seq([ 1,,,2 ])
+```
+
+Remember when I prohibited the use of array indexers? The reason for that restriction 
+should now become clearer to you. Whereas the 5 functions can be used on any collection, 
+indexers can only be used on collections that support random-access (like Array). 
+If you avoid indexers and stick to the functions you've learned in this tutorial, 
+you'll have a unified programming model for transforming any collection. 
+Having a unified programming model makes it trivial to convert synchronous code to 
+asynchronous code, a process which would otherwise be very difficult. 
+As we've demonstrated, you don't need indexers to perform complex collection 
+transformations.
+
+Now that we've seen that we can query asychronous and synchronous data sources 
+using the same programming model, let's use Observable and our query functions to 
+create complex new events.
