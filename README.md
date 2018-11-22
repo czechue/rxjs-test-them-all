@@ -1,4 +1,4 @@
-##### Rxjs course of: http://reactivex.io/learnrx/
+##### Rxjs exercises 
 
 ##### Powered by: [Webpack 4 (4.23.0) Vanilla Javascript Starter Pack](https://github.com/czechue/webpack-4-vanilla-js-starter)
 
